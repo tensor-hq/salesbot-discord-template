@@ -3,17 +3,18 @@ const { Client, TextChannel, Guild, EmbedBuilder } = require('discord.js');
 const WebSocket = require('ws');
 
 // Tensor API Key
-const API_KEY = "TENSOR_API_KEY";
+const API_KEY = process.env.API_KEY || "TENSOR_API_KEY";
 // Secret token of your Bot
-const BOT_TOKEN = "DISCORD_BOT_TOKEN";
+const BOT_TOKEN = process.env.BOT_TOKEN || "DISCORD_BOT_TOKEN";
 // Guild ID (Discord Server ID)
-const GUILD_ID = "GUILD_ID";
+const GUILD_ID = process.env.GUILD_ID || "GUILD_ID";
 // Channel ID of the Server
-const CHANNEL_ID = "CHANNEL_ID";
+const CHANNEL_ID = process.env.CHANNEL_ID || "CHANNEL_ID";
 // Tensor WSS URL
-const WSS_URL = "wss://rest-gated.api.tensor-infra.com/ws";
+const WSS_URL = process.env.WSS_URL || "wss://rest-gated.api.tensor-infra.com/ws";
 // Collection slug you want to listen to (default: Tensorians)
-const slug = "05c52d84-2e49-4ed9-a473-b43cab41e777";
+const slug = process.env.SLUG || "05c52d84-2e49-4ed9-a473-b43cab41e777";
+
 // Specific txType's you want the bot to send messages for (for extra txType's, you need to define wanted messages in sendEventToDiscord())
 const TXTYPES_TO_LISTEN_TO = ["SWAP_SELL_NFT", "SALE_BUY_NOW"];
 
