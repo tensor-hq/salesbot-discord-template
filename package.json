@@ -1,0 +1,22 @@
+{
+  "name": "salesbot-discord-template",
+  "version": "1.0.0",
+  "description": "**Welcome to the Tensor Discord Template!**",
+  "main": "main.ts",
+  "scripts": {
+    "start": "npx ts-node main.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tensor-hq/salesbot-discord-template.git"
+  },
+  "author": "",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/tensor-hq/salesbot-discord-template/issues"
+  },
+  "homepage": "https://github.com/tensor-hq/salesbot-discord-template#readme",
+  "dependencies": {
+    "discord.js": "^14.14.1"
+  }
+}
