@@ -49,3 +49,5 @@ SLUG=
 npx ts-node main.ts
 ```
 
+#### Join the bot to your Discord
+Review the [Discord documentation](https://discordjs.guide/preparations/adding-your-bot-to-servers.html#bot-invite-links) to see how to join your bot to a discord
