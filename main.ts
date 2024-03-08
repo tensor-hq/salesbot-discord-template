@@ -16,7 +16,7 @@ const WSS_URL = process.env.WSS_URL || "wss://rest-gated.api.tensor-infra.com/ws
 const slug = process.env.SLUG || "05c52d84-2e49-4ed9-a473-b43cab41e777";
 
 // Specific txType's you want the bot to send messages for (for extra txType's, you need to define wanted messages in sendEventToDiscord())
-const TXTYPES_TO_LISTEN_TO = ["SWAP_SELL_NFT", "SALE_BUY_NOW"];
+const TXTYPES_TO_LISTEN_TO = ["SWAP_SELL_NFT", "SALE_BUY_NOW", "SALE_ACCEPT_BID"];
 
 const client = new Client({
     intents: [],
@@ -48,6 +48,15 @@ async function runSetup() {
                     "slug": slug
                 }
             }));
+            // Send ping every 30s
+            const sendPing = () => {
+                const pingEvent = JSON.stringify({ event: "ping" });
+                socket.send(pingEvent);
+                setTimeout(sendPing, 30000);
+            };
+
+            // Start sending pings
+            sendPing();
         });
         console.log("Connected to Tensor WebSocket Endpoint, waiting for incoming events...");
 
@@ -59,7 +68,7 @@ async function runSetup() {
         socket.addEventListener('message', (event) => {
             // Check if the incoming event has data attached to it
             const event_stringified = event?.data?.toString();
-            if (event_stringified !== '' && event_stringified !== null) {
+            if (event_stringified !== '' && event_stringified !== null && event_stringified !== `{"type":"pong"}`) {
                 // Parse event
                 const eventData = JSON.parse(event_stringified);
                 // Send Discord message if txType is included in TXTYPES_TO_LISTEN_TO
@@ -96,7 +105,7 @@ async function sendEventToDiscord(eventData, channel) {
                 { name: 'Seller', value: formatAddressesAndTxIds(seller, sellerLink), inline: true }
             );
         // NFT got sold into pool
-        if (eventData.data.tx.tx.txType == "SWAP_SELL_NFT") {
+        if (eventData.data.tx.tx.txType == "SWAP_SELL_NFT" || eventData.data.tx.tx.txType == "SALE_ACCEPT_BID") {
             embed.setDescription(`got sold into a Pool for ${Number((priceLamports / 1_000_000_000).toFixed(3))} S◎L. :zap:`);
         }
         // NFT got bought from the orderbook
