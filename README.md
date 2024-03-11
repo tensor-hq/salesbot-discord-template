@@ -1,4 +1,4 @@
-# Tensor Market Boilerplate
+# Tensor Discord Template
 
 **Welcome to the Tensor Discord Template!**
 
