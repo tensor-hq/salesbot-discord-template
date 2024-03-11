@@ -4,7 +4,7 @@
 
 This demo provides a simple foundation for working with the Tensor API, use it to get started building NOW!
 
-![Sample Screenshot]()
+![Sample Screenshot](https://github.com/tensor-hq/salesbot-discord-template/blob/main/image.jpg?raw=true)
 
 ### Prerequisites
 
