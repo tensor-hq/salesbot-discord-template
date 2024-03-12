@@ -65,7 +65,7 @@ async function runSetup() {
             // Check if pong was received within the last 40 seconds, if not clean up and try to reconnect
             const checkPongs = () => {
                 if (lastPongReceived !== null && Date.now() - lastPongReceived > 40000) {
-                    console.log("Pong not received in the last 60 seconds. Reconnecting to WS...");
+                    console.log("Pong not received in the last 40 seconds. Reconnecting to WS...");
                     cleanUp();
                     runSetup();
                 }
