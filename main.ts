@@ -16,7 +16,12 @@ const WSS_URL = process.env.WSS_URL || "wss://rest-gated.api.tensor-infra.com/ws
 const slug = process.env.SLUG || "05c52d84-2e49-4ed9-a473-b43cab41e777";
 
 // Specific txType's you want the bot to send messages for (for extra txType's, you need to define wanted messages in sendEventToDiscord())
-const TXTYPES_TO_LISTEN_TO = ["SWAP_SELL_NFT", "SALE_BUY_NOW"];
+const TXTYPES_TO_LISTEN_TO = ["SWAP_SELL_NFT", "SALE_BUY_NOW", "SALE_ACCEPT_BID"];
+
+let lastPongReceived = null;
+let pingTimeoutId = null;
+let pongTimeoutId = null;
+let socket = null;
 
 const client = new Client({
     intents: [],
@@ -33,7 +38,7 @@ client.once('ready', () => {
 
 async function runSetup() {
     try {
-        const socket = new WebSocket(WSS_URL, {
+        socket = new WebSocket(WSS_URL, {
             headers: {
                 'x-tensor-api-key': API_KEY,
             },
@@ -48,6 +53,29 @@ async function runSetup() {
                     "slug": slug
                 }
             }));
+            // Send ping every 30s
+            const sendPing = () => {
+                const pingEvent = JSON.stringify({ event: "ping" });
+                socket.send(pingEvent);
+                console.log("sent ping");
+                pingTimeoutId = setTimeout(sendPing, 30000);
+            };
+            // Start sending pings
+            sendPing();
+            // Check if pong was received within the last 40 seconds, if not clean up and try to reconnect
+            const checkPongs = () => {
+                if (lastPongReceived !== null && Date.now() - lastPongReceived > 40000) {
+                    console.log("Pong not received in the last 40 seconds. Reconnecting to WS...");
+                    cleanUp();
+                    runSetup();
+                }
+                else {
+                    console.log(`Last pong received ${(Date.now() - lastPongReceived) / 1000} seconds ago.`);
+                    pongTimeoutId = setTimeout(checkPongs, 10000);
+                }
+            }
+            // Start checking pongs
+            checkPongs();
         });
         console.log("Connected to Tensor WebSocket Endpoint, waiting for incoming events...");
 
@@ -62,6 +90,11 @@ async function runSetup() {
             if (event_stringified !== '' && event_stringified !== null) {
                 // Parse event
                 const eventData = JSON.parse(event_stringified);
+                if (eventData.type === 'pong') {
+                    console.log("received pong");
+                    lastPongReceived = Date.now();
+                    return;
+                }
                 // Send Discord message if txType is included in TXTYPES_TO_LISTEN_TO
                 if (TXTYPES_TO_LISTEN_TO.includes(eventData.data.tx.tx.txType)) {
                     sendEventToDiscord(eventData, channel);
@@ -96,7 +129,7 @@ async function sendEventToDiscord(eventData, channel) {
                 { name: 'Seller', value: formatAddressesAndTxIds(seller, sellerLink), inline: true }
             );
         // NFT got sold into pool
-        if (eventData.data.tx.tx.txType == "SWAP_SELL_NFT") {
+        if (eventData.data.tx.tx.txType == "SWAP_SELL_NFT" || eventData.data.tx.tx.txType == "SALE_ACCEPT_BID") {
             embed.setDescription(`got sold into a Pool for ${Number((priceLamports / 1_000_000_000).toFixed(3))} S◎L. :zap:`);
         }
         // NFT got bought from the orderbook
@@ -111,9 +144,30 @@ async function sendEventToDiscord(eventData, channel) {
     }
 }
 
-// helper func that shortens addresses and tx ids and formats them to a markdown hyperlink  
+// Helper func that shortens addresses and tx ids and formats them to a markdown hyperlink  
 function formatAddressesAndTxIds(address: string, link: string) {
     const firstFour = address.slice(0, 4);
     const lastFour = address.slice(-4);
     return `[${firstFour}...${lastFour}](${link})`;
 }
+
+// Clears timeouts, closes socket and resets global vars to null 
+function cleanUp() {
+    if (pingTimeoutId !== null) {
+        clearTimeout(pingTimeoutId);
+    }
+    if (pongTimeoutId !== null) {
+        clearTimeout(pongTimeoutId);
+    }
+    socket.terminate();
+
+    lastPongReceived = null;
+    pingTimeoutId = null;
+    pongTimeoutId = null;
+    socket = null;
+}
+
+// On shutdown, clean up
+process.on('SIGINT', () => {
+    cleanUp();
+});
