@@ -82,7 +82,13 @@ async function runSetup() {
         // Fetch the Guild using Guild ID and Channel using Channel ID
         const guild = await client.guilds.fetch(GUILD_ID);
         const channel = await guild.channels.fetch(CHANNEL_ID);
-
+        // On error, try to reconnect
+        socket.onerror = async (event) => {
+            console.log("WS connection error, sleeping, cleaning up and trying to reconnect again");
+            await sleep(1000);
+            cleanUp();
+            runSetup();
+        }
         // Start listening to incoming messages
         socket.addEventListener('message', (event) => {
             // Check if the incoming event has data attached to it
@@ -171,3 +177,10 @@ function cleanUp() {
 process.on('SIGINT', () => {
     cleanUp();
 });
+
+// Sleep helper func
+async function sleep(ms: number) {
+    return new Promise((resolve) => {
+        setTimeout(resolve, ms);
+    });
+}
